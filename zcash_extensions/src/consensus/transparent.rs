@@ -8,14 +8,18 @@ use zcash_primitives::transaction::{Transaction, components::tze::TzeOut};
 use zcash_protocol::consensus::{BlockHeight, BranchId};
 
 use crate::transparent::demo;
+use crate::transparent::concat;
 
 /// Wire value for the demo extension identifier.
 pub const EXTENSION_DEMO: u32 = 0;
+/// Wire value for the concat extension identifier.
+pub const EXTENSION_CONCAT: u32 = 1;
 
 /// The set of programs that have assigned type IDs within the Zcash consensus rules.
 #[derive(Debug, Clone, Copy)]
 pub enum ExtensionId {
     Demo,
+    Concat,
 }
 
 pub struct InvalidExtId(u32);
@@ -26,6 +30,7 @@ impl TryFrom<u32> for ExtensionId {
     fn try_from(t: u32) -> Result<Self, Self::Error> {
         match t {
             EXTENSION_DEMO => Ok(ExtensionId::Demo),
+            EXTENSION_CONCAT => Ok(ExtensionId::Concat),
             n => Err(InvalidExtId(n)),
         }
     }
@@ -35,6 +40,7 @@ impl From<ExtensionId> for u32 {
     fn from(type_id: ExtensionId) -> u32 {
         match type_id {
             ExtensionId::Demo => EXTENSION_DEMO,
+            ExtensionId::Concat => EXTENSION_CONCAT,
         }
     }
 }
@@ -112,6 +118,9 @@ impl Epoch for EpochVTest {
         // This epoch recognizes the following set of extensions:
         match ext_id {
             ExtensionId::Demo => demo::Program
+                .verify(precondition, witness, ctx)
+                .map_err(|e| Error::ProgramError(format!("Epoch vTest program error: {}", e))),
+            ExtensionId::Concat => concat::Program
                 .verify(precondition, witness, ctx)
                 .map_err(|e| Error::ProgramError(format!("Epoch vTest program error: {}", e))),
         }
